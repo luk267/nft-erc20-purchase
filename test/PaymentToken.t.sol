@@ -2,6 +2,7 @@
 pragma solidity 0.8.30;
 
 import {Test} from "forge-std/Test.sol";
+import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {PaymentToken} from "../src/PaymentToken.sol";
 
 contract PaymentTokenTest is Test {
@@ -26,5 +27,10 @@ contract PaymentTokenTest is Test {
 
         assertEq(token.balanceOf(bob), 50 * 10 ** 18);
         assertEq(token.totalSupply(), 50 * 10 ** 18);
+    }
+
+    function test_RevertWhen_MintToZeroAddress() public {
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
+        token.mint(address(0), 1);
     }
 }
