@@ -20,6 +20,8 @@ contract PurchasableNFT is ERC721, Ownable {
 
     error ZeroAddress();
     error SoldOut();
+    error NothingToWithdraw();
+    error RenounceOwnershipDisabled();
 
     constructor(address token) ERC721("PurchasableNFT", "PNFT") Ownable(msg.sender) {
         if (token == address(0)) revert ZeroAddress();
@@ -36,5 +38,20 @@ contract PurchasableNFT is ERC721, Ownable {
 
         paymentToken.safeTransferFrom(msg.sender, address(this), PRICE);
         _safeMint(msg.sender, tokenId);
+    }
+
+    /// Sends the whole payment token balance to the owner.
+    function withdraw() external onlyOwner {
+        uint256 balance = paymentToken.balanceOf(address(this));
+        // Others can only increase the balance, never set it to 0, so this equality cannot be abused.
+        // slither-disable-next-line incorrect-equality
+        if (balance == 0) revert NothingToWithdraw();
+
+        paymentToken.safeTransfer(owner(), balance);
+    }
+
+    /// Disabled: without an owner, the proceeds would be locked forever.
+    function renounceOwnership() public pure override {
+        revert RenounceOwnershipDisabled();
     }
 }
